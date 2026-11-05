@@ -1,0 +1,25 @@
+name: Build RobloxBoost.dylib
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile (arm64, iOS)
+        run: |
+          xcrun --sdk iphoneos clang -arch arm64 -miphoneos-version-min=13.0 \
+            -dynamiclib -fobjc-arc -O2 -fvisibility=hidden -Wno-deprecated-declarations \
+            -framework Foundation -framework UIKit -framework QuartzCore -framework Metal \
+            -install_name @rpath/RobloxBoost.dylib \
+            -o RobloxBoost.dylib RobloxBoost.m
+          strip -x RobloxBoost.dylib
+          codesign -f -s - RobloxBoost.dylib
+          file RobloxBoost.dylib
+          otool -L RobloxBoost.dylib
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RobloxBoost-dylib
+          path: RobloxBoost.dylib
